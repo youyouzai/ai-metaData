@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="alert alert-warning shadow-sm">
+  <h1 class="h4">{{ title }}</h1>
+  <p class="mb-0">{{ message }}</p>
+</div>
+<a class="btn btn-outline-primary" href="/web/browse">返回浏览</a>
+{% endblock %}

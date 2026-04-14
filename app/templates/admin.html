@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}权限管理{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">权限管理</h1>
+{% if msg %}
+<div class="alert alert-success">{{ msg }}</div>
+{% endif %}
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <label class="form-label">选择要配置的用户</label>
+    <select class="form-select" id="admin_target">
+      {% for u in users %}
+      <option value="{{ u.username }}" {% if u.username == target_username %}selected{% endif %}>
+        {{ u.display_name }} — {{ u.username }}{% if u.is_admin %}（管理员）{% endif %}
+      </option>
+      {% endfor %}
+    </select>
+    <p class="text-muted small mt-2 mb-0">
+      行权限：若某类型下不勾选任何实例，则该用户在该类型上<strong>不限制行</strong>；只要勾选了该类型任意一行，则该类型变为<strong>白名单</strong>模式。
+    </p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header">列权限（可读属性）</div>
+      <div class="card-body">
+        <form method="post" action="/web/admin/columns" id="form_cols">
+          <input type="hidden" name="target_username" class="target-field" value="{{ target_username or '' }}" />
+          {% for g in attrs_grouped %}
+          <h3 class="h6 text-primary">{{ g.name }}（{{ g.code }}）</h3>
+          <div class="mb-3">
+            {% for a in g.attributes %}
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                name="attr_{{ a.id }}"
+                id="attr_{{ a.id }}"
+                {% if a.id in col_sel %}checked{% endif %}
+              />
+              <label class="form-check-label" for="attr_{{ a.id }}">{{ a.name }}（<code>{{ a.code }}</code>）</label>
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+          <button class="btn btn-primary" type="submit">保存列权限</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header">行权限（可见业务主键）</div>
+      <div class="card-body">
+        <form method="post" action="/web/admin/rows" id="form_rows">
+          <input type="hidden" name="target_username" class="target-field" value="{{ target_username or '' }}" />
+          {% for g in objects_grouped %}
+          <h3 class="h6 text-primary">{{ g.name }}（{{ g.code }}）</h3>
+          <div class="mb-3">
+            {% for o in g.objects %}
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                name="row_{{ o.id }}"
+                id="row_{{ o.id }}"
+                {% if o.id in row_sel %}checked{% endif %}
+              />
+              <label class="form-check-label" for="row_{{ o.id }}"><code>{{ o.business_key }}</code></label>
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+          <button class="btn btn-primary" type="submit">保存行权限</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function syncTarget() {
+    var v = document.getElementById("admin_target").value;
+    document.querySelectorAll(".target-field").forEach(function (e) {
+      e.value = v;
+    });
+    var u = new URL(window.location.href);
+    u.searchParams.set("target", v);
+    history.replaceState(null, "", u.toString());
+  }
+  document.getElementById("admin_target").addEventListener("change", syncTarget);
+  syncTarget();
+</script>
+{% endblock %}

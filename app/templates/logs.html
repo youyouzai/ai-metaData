@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}运行日志{% endblock %}
+{% block content %}
+<h1 class="h4 mb-2">业务查询日志（实时）</h1>
+<p class="text-muted small mb-3">
+  Logger：<code>mdm.business</code>。关闭控制台日志不影响此处缓冲；完全关闭请设
+  <code>MDM_BUSINESS_LOG=0</code>。缓冲在进程内，重启服务后清空。
+</p>
+<div
+  id="log"
+  class="bg-dark text-light p-2 rounded font-monospace small border"
+  style="height: 72vh; overflow-y: auto; white-space: pre-wrap; word-break: break-all"
+></div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (function () {
+    var el = document.getElementById("log");
+    var maxLines = 2500;
+    function addLine(text) {
+      var div = document.createElement("div");
+      div.textContent = text;
+      el.appendChild(div);
+      while (el.childNodes.length > maxLines) {
+        el.removeChild(el.firstChild);
+      }
+      el.scrollTop = el.scrollHeight;
+    }
+    fetch("/api/logs?n=400")
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (d) {
+        (d.items || []).forEach(function (x) {
+          addLine(x.id + " | " + x.line);
+        });
+      })
+      .catch(function () {});
+    var es = new EventSource("/api/logs/stream");
+    es.onmessage = function (ev) {
+      try {
+        var d = JSON.parse(ev.data);
+        if (d.err === "login") {
+          addLine("[未登录或会话失效，请返回登录]");
+          es.close();
+          return;
+        }
+        if (d.line) {
+          addLine(d.id + " | " + d.line);
+        }
+      } catch (e) {}
+    };
+  })();
+</script>
+{% endblock %}

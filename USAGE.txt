@@ -1,0 +1,47 @@
+元数据管理系统（MySQL + FastAPI）
+
+一、启动数据库（首次会自动执行 sql/ 下脚本建表并灌 demo）
+  docker compose up -d
+
+  若本机 MySQL 报 Unknown database 'ai_metadata'：先用高权限账号执行 sql/000_create_database.sql，
+  再对库 ai_metadata 执行 001_schema.sql、002_seed.sql。
+
+二、安装并启动 API（工作目录为项目根目录）
+  python -m venv .venv
+  .venv\Scripts\activate
+  pip install -r requirements.txt
+  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+  连接参数可用环境变量覆盖：MYSQL_HOST MYSQL_PORT MYSQL_USER MYSQL_PASSWORD MYSQL_DATABASE
+  业务查询过程与 SQL 日志（控制台 logger mdm.business）默认开启，关闭：set MDM_BUSINESS_LOG=0
+  登录后打开 http://127.0.0.1:8000/web/logs 可实时查看同一 logger 的内存缓冲（SSE）
+  管理员主数据 CRUD（分页）：http://127.0.0.1:8000/web/bo
+  按行权限分页查看业务主键：http://127.0.0.1:8000/web/objects-page
+
+  本机一键初始化库表 + demo（需账号有建库权限，默认 root/root）：
+  .venv\Scripts\python scripts\init_db.py
+
+三、Web 页面（登录后按行权限 + 列权限过滤）
+  浏览器打开：http://127.0.0.1:8000/web/login
+  管理员（可配置行/列权限）：admin
+  普通演示账号：sales_a、marketing_b、compliance_c
+
+四、演示账号与数据权限（mdm_users.username）
+  sales_a      列：客户编号/名称/手机/邮箱；订单号/金额/客户编号。行：仅 C-10001、O-90001
+  marketing_b  列：客户名称/地址；订单号/客户编号。行：仅 C-10002、O-90002
+  compliance_c 列：客户与订单全字段；行：不限制（未配置行白名单）
+  admin        列：全字段；行：不限制；可进入「权限管理」
+
+五、示例请求（API）
+  GET http://127.0.0.1:8000/users
+  GET http://127.0.0.1:8000/permissions?username=sales_a
+  GET http://127.0.0.1:8000/objects/CUSTOMER?username=sales_a
+  GET http://127.0.0.1:8000/objects/CUSTOMER/C-10001?username=sales_a
+  GET http://127.0.0.1:8000/docs  （Swagger）
+
+六、已有旧库升级（若缺 is_admin / user_object_row_grants）
+  在 MySQL 中手工执行 sql/003_migrate_add_row_acl.sql（若列已存在会报错，可忽略对应语句）
+
+七、若需重建数据库数据
+  docker compose down -v
+  docker compose up -d

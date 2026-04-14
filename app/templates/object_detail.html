@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ data.object_type.name }} - {{ data.business_key }}{% endblock %}
+{% block content %}
+<div class="mb-3">
+  <a href="/web/browse?type={{ data.object_type.code }}" class="btn btn-sm btn-outline-secondary"
+    >&larr; 返回列表</a
+  >
+</div>
+<div class="card shadow-sm">
+  <div class="card-header">
+    <h1 class="h5 mb-0">
+      {{ data.object_type.name }}
+      <span class="text-muted">{{ data.business_key }}</span>
+    </h1>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th>字段</th>
+            <th>名称</th>
+            <th>类型</th>
+            <th>值</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for code, a in data.attributes.items() %}
+          <tr>
+            <td><code>{{ code }}</code></td>
+            <td>{{ a.label }}</td>
+            <td>{{ a.data_type }}</td>
+            <td>{{ a.value }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

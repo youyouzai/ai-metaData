@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'new' %}新建{% else %}编辑{% endif %} — 主数据{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">
+  {% if mode == 'new' %}新建业务对象{% else %}编辑业务对象{% endif %}
+  <span class="text-muted small">{{ payload.type.name }}（{{ payload.type.code }}）</span>
+</h1>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form
+  method="post"
+  action="{% if mode == 'new' %}/web/bo/new{% else %}/web/bo/edit{% endif %}"
+  class="card shadow-sm"
+>
+  <div class="card-body">
+    <input type="hidden" name="object_type" value="{{ payload.type.code }}" />
+    {% if mode == 'edit' %}
+    <input type="hidden" name="original_key" value="{{ payload.object.business_key }}" />
+    {% endif %}
+
+    <div class="mb-3">
+      <label class="form-label">业务主键 <span class="text-danger">*</span></label>
+      <input
+        type="text"
+        name="business_key"
+        class="form-control"
+        required
+        maxlength="128"
+        value="{% if mode == 'edit' %}{{ payload.object.business_key }}{% endif %}"
+      />
+      <div class="form-text">同类型下唯一；编辑时可修改主键（保存后链接会更新）。</div>
+    </div>
+
+    <h2 class="h6 text-secondary mb-2">属性值（EAV）</h2>
+    {% for f in payload.fields %}
+    <div class="mb-3">
+      <label class="form-label">{{ f.name }} <code>{{ f.code }}</code></label>
+      <input
+        type="text"
+        name="aval_{{ f.id }}"
+        class="form-control"
+        value="{{ f.value_text or '' }}"
+      />
+      <div class="form-text">类型：{{ f.data_type }}</div>
+    </div>
+    {% endfor %}
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">保存</button>
+      <a class="btn btn-outline-secondary" href="/web/bo?type={{ payload.type.code | uriquote }}"
+        >返回列表</a
+      >
+    </div>
+  </div>
+</form>
+{% endblock %}

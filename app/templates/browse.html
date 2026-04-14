@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}浏览 - MDM{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0">业务对象</h1>
+</div>
+
+<div class="row g-3 mb-4">
+  {% for t in object_types %}
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5">{{ t.name }} <span class="text-muted small">{{ t.code }}</span></h2>
+        <p class="text-muted small mb-3">{{ t.description or '' }}</p>
+        <a class="btn btn-outline-primary btn-sm" href="/web/browse?type={{ t.code }}">查看列表</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if perm %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header">当前用户权限摘要</div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h3 class="h6">列权限（可读字段）</h3>
+        <ul class="small mb-0">
+          {% for type_code, attrs in perm.readable_attributes_by_type.items() %}
+          <li>
+            <strong>{{ type_code }}</strong>：
+            {% for a in attrs %}{{ a.name }}{% if not loop.last %}、{% endif %}{% endfor %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h3 class="h6">行权限（白名单主键）</h3>
+        {% if perm.row_acl.has_row_whitelist_entries %}
+        <ul class="small mb-0">
+          {% for type_code, keys in perm.row_acl.whitelist_by_type.items() %}
+          <li><strong>{{ type_code }}</strong>：{{ keys | join('，') }}</li>
+          {% endfor %}
+        </ul>
+        <p class="text-muted small mb-0">{{ perm.row_acl.note }}</p>
+        {% else %}
+        <p class="text-muted small mb-0">未配置行白名单：各类型可见全部行（仍受列权限约束）</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if selected_type %}
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>类型 <code>{{ selected_type }}</code> 可见主键</span>
+    <a class="btn btn-sm btn-outline-secondary" href="/web/browse">返回</a>
+  </div>
+  <div class="card-body">
+    {% if keys_data and keys_data.business_keys %}
+    <ul class="list-group">
+      {% for k in keys_data.business_keys %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <code>{{ k }}</code>
+        <a
+          class="btn btn-sm btn-primary"
+          href="/web/objects/{{ selected_type }}/{{ k }}"
+          >查看</a
+        >
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted mb-0">当前用户在该类型下没有可见行（或未选择类型）</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
